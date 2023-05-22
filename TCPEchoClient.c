@@ -86,11 +86,11 @@ int main(int argc, char *argv[])
                     echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
                     printf("message, that client %d recieved: ", i);
                     printf("%s", echoBuffer);      /* Print the echo buffer */
-                    sleep(5);
+                    sleep(3);
                 }
 
                 printf("\n");    /* Print a final linefeed */
-                sleep(5);
+                sleep(3);
             }
 
             sleep(2);
