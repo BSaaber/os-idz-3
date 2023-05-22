@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
 
                 /* Receive string back from the server */
                 totalBytesRcvd = 0;
-                printf("%d) Received: ", i);            // Setup to print the echoed string
                 while (totalBytesRcvd < MESSAGE_SIZE) {
                     /* Receive up to the buffer size (minus 1 to leave space for
                     a null terminator) bytes from the sender */
