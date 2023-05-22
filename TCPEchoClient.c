@@ -67,9 +67,7 @@ int main(int argc, char *argv[])
     echoServAddr.sin_addr.s_addr = inet_addr(servIP);   /* Server IP address */
     echoServAddr.sin_port        = htons(echoServPort); /* Server port */
 
-    /* Establish the connection to the echo server */
-    if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
-        DieWithError("connect() failed");
+
 
     //------------------------------------------------------------------------
 
@@ -96,9 +94,6 @@ int main(int argc, char *argv[])
     echoServAddr_skameika.sin_addr.s_addr = inet_addr(servIP_skameika);   /* Server IP address */
     echoServAddr_skameika.sin_port        = htons(echoServPort_skameika); /* Server port */
 
-    /* Establish the connection to the echo server */
-    if (connect(sock, (struct sockaddr *) &echoServAddr_skameika, sizeof(echoServAddr_skameika)) < 0)
-        DieWithError("connect() failed");
 
     //------------------------------------------------------------------------
 
@@ -120,6 +115,11 @@ int main(int argc, char *argv[])
             // case 1 - client i want to try to rent a room
             if (!strcmp(clients[i], rent_request)) {
                 printf("client tries to rent a room\n");
+
+                /* Establish the connection to the echo server */
+                if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+                    DieWithError("connect() failed");
+
                 /* Send the string to the server */
                 if (send(sock, clients[i], strlen(clients[i]), 0) != strlen(clients[i]))
                     DieWithError("send() sent a different number of bytes than expected");
@@ -146,6 +146,9 @@ int main(int argc, char *argv[])
                         clients[i] = sit_request;
                     }
                 }
+
+                close(sock);
+
             } else if (!strcmp(clients[i], sleep_hotel_stage) || !strcmp(clients[i], sleep_skameika_stage)) { // case 2 - sleep on skameika or in a hotel
                 printf("client sleeps\n");
                 clients_wait_time[i] -= 1;
@@ -161,6 +164,10 @@ int main(int argc, char *argv[])
                 }
             } else if (!strcmp(clients[i], sit_request)) {
                 printf("client goes to skameika\n");
+
+                /* Establish the connection to the echo server */
+                if (connect(sock_skameika, (struct sockaddr *) &echoServAddr_skameika, sizeof(echoServAddr_skameika)) < 0)
+                    DieWithError("connect() failed");
 
                 if (send(sock_skameika, clients[i], strlen(clients[i]), 0) != strlen(clients[i]))
                     DieWithError("send() sent a different number of bytes than expected");
@@ -185,12 +192,19 @@ int main(int argc, char *argv[])
                 }
 
 
+                close(sock_skameika);
+
+
 
                 clients[i] = sleep_skameika_stage;
                 clients_wait_time[i] = 1 + rand() % 4; //  sleep from 1 to 5 * DAY_LENGTH seconds (+ process time)
                 printf("I am at skameika now. I go to sleep on skameika for %d days\n", clients_wait_time[i]);
             } else if (!strcmp(clients[i], free_request)) {
                 printf("client goes to free a room\n");
+
+                /* Establish the connection to the echo server */
+                if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
+                    DieWithError("connect() failed");
 
                 if (send(sock, clients[i], strlen(clients[i]), 0) != strlen(clients[i]))
                     DieWithError("send() sent a different number of bytes than expected");
@@ -214,6 +228,9 @@ int main(int argc, char *argv[])
                     printf("i freed a room, i will try to rent a room tomorrow");
                     clients[i] = rent_request;
                 }
+
+                close(sock);
+
             }
             printf("\n\n");
             sleep(1);
@@ -222,6 +239,5 @@ int main(int argc, char *argv[])
         printf("------------------\n\n\n");
     }
 
-    close(sock);
     exit(0);
 }
