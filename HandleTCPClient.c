@@ -20,6 +20,7 @@ void HandleTCPClient(int clntSocket, int* free_space)
     /* Receive message from client */
     if ((recvMsgSize = recv(clntSocket, echoBuffer, RCVBUFSIZE, 0)) < 0)
         DieWithError("recv() failed");
+    printf("log: free space - %d", *free_space);
 
     /* Send received string and receive again until end of transmission */
     while (recvMsgSize > 0)      /* zero indicates end of transmission */
@@ -27,12 +28,15 @@ void HandleTCPClient(int clntSocket, int* free_space)
         if (!strcmp(free_request, echoBuffer)) {
             *free_space++;
             response = success_response;
+            printf("log: freeing room. space now - %d", *free_space);
         } else if (!strcmp(rent_request, echoBuffer)) {
             if (*free_space > 0) {
-                *free_space--;
+                *free_space -= 1;
                 response = success_response;
+                printf("log: allocating room. space now - %d", *free_space);
             } else {
                 response = error_response;
+                printf("log: all rooms are allocated. free space - %d", *free_space);
             }
         }
         /* Echo message back to client */
@@ -45,5 +49,6 @@ void HandleTCPClient(int clntSocket, int* free_space)
     }
 
     close(clntSocket);    /* Close client socket */
+    printf("log: connection closed");
 }
 
