@@ -19,9 +19,9 @@ int main(int argc, char *argv[])
     unsigned short echoServPort;     /* Server port */
     unsigned int clntLen;            /* Length of client address data structure */
 
-    if (argc != 2)     /* Test for correct number of arguments */
+    if (argc != 3)     /* Test for correct number of arguments */
     {
-        fprintf(stderr, "Usage:  %s <Server Port>\n", argv[0]);
+        fprintf(stderr, "Usage:  %s <Server Port> <Rooms amount>\n", argv[0]);
         exit(1);
     }
 
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     if (listen(servSock, MAXPENDING) < 0)
         DieWithError("listen() failed");
 
-    int free_space = 30;
+    int free_space = atoi(argv[2]);
 
     for (;;) /* Run forever */
     {

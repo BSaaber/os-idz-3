@@ -14,10 +14,12 @@ char* success_response =       "okay\0";
 char* error_response =         "fail\0";
 char* rent_request =           "rent\0";
 char* free_request =           "free\0";
-char* sleep_stage =            "slep\0";
+char* sleep_hotel_stage =      "slph\0";
+char* sleep_skameika_stage =   "slps\0";
 char* sit_request =            "sitt\0";
 int MESSAGE_SIZE = 4;
 int DAY_LENGTH = 3;
+int CLIENTS_AMOUNT = 10;
 
 int main(int argc, char *argv[])
 {
@@ -32,19 +34,20 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
-    if ((argc < 3) || (argc > 4))    /* Test for correct number of arguments */
+    if (argc != 5)    /* Test for correct number of arguments */
     {
-        fprintf(stderr, "Usage: %s <Server IP> <Echo Port>\n",
+        fprintf(stderr, "Usage: %s <Server IP> <Echo Port> <Clients amount> <Day length (seconds)>\n",
                 argv[0]);
         exit(1);
     }
 
     servIP = argv[1];             /* First arg: server IP address (dotted quad) */
 
-    if (argc == 4)
-        echoServPort = atoi(argv[2]); /* Use given port, if any */
-    else
-        echoServPort = 7;  /* 7 is the well-known port for the echo service */
+    echoServPort = atoi(argv[2]); /* Use given port, if any */
+
+    CLIENTS_AMOUNT = atoi(argv[3]);
+
+    DAY_LENGTH = atoi(argv[4]);
 
     /* Create a reliable, stream socket using TCP */
     if ((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -60,11 +63,11 @@ int main(int argc, char *argv[])
     if (connect(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0)
         DieWithError("connect() failed");
 
-    int clients_amount = 30;
-    char* clients[clients_amount];
-    int clients_wait_time[clients_amount];
 
-    for (int i = 0; i < clients_amount; ++i) {
+    char* clients[CLIENTS_AMOUNT];
+    int clients_wait_time[CLIENTS_AMOUNT];
+
+    for (int i = 0; i < CLIENTS_AMOUNT; ++i) {
         // at the start, all clients just want to go to the hotel
         clients[i] = rent_request;
         clients_wait_time[i] = 0;
@@ -72,7 +75,7 @@ int main(int argc, char *argv[])
 
     for(; ;) {
         // for each client
-        for (int i = 0; i < clients_amount; ++i) {
+        for (int i = 0; i < CLIENTS_AMOUNT; ++i) {
             printf("processing client %d\n", i);
 
 
@@ -93,34 +96,61 @@ int main(int argc, char *argv[])
                     totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
                     echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
                     printf("message, that client %d recieved: ", i);
-                    printf("%s", echoBuffer);      /* Print the echo buffer */
+                    printf("%s\n", echoBuffer);      /* Print the echo buffer */
 
                     // case success - client rent a room
                     if (!strcmp(echoBuffer, success_response)) {
-                        clients[i] = sleep_stage;
+                        clients[i] = sleep_hotel_stage;
                         clients_wait_time[i] = 1 + rand() % 4; //  sleep from 1 to 5 * DAY_LENGTH seconds (+ process time)
                         printf("horaay! i rent a room! now i go to sleep for %d days\n", clients_wait_time[i]);
                     } else if (!strcmp(echoBuffer, error_response)) { // case there is no space in hotel - go sit on a skameika
                         printf("oh no, all rooms are allocated! now i go to sleep on skameika\n");
                         clients[i] = sit_request;
                     }
-
-                    sleep(DAY_LENGTH);
                 }
-            } else if (!strcmp(clients[i], sleep_stage)) { // case 2 - sleep on skameika or in a hotel
+            } else if (!strcmp(clients[i], sleep_hotel_stage) || !strcmp(clients[i], sleep_skameika_stage)) { // case 2 - sleep on skameika or in a hotel
                 printf("client sleeps\n");
                 clients_wait_time[i] -= 1;
                 if (clients_wait_time[i] == 0) {
                     printf("client woke up\n");
-                    printf("i will try to rent a room in future\n");
-                    clients[i] = rent_request;
+                    if (!strcmp(clients[i], sleep_hotel_stage)) { // woke up in hotel -> go free
+                        printf("i will free a room tomorrow\n");
+                        clients[i] = free_request;
+                    } else if (!strcmp(clients[i], sleep_skameika_stage)) { // woke up on skameika -> go rent
+                        printf("i will try to rent a room tomorrow\n");
+                        clients[i] = rent_request;
+                    }
                 }
             } else if (!strcmp(clients[i], sit_request)) {
                 printf("client goes to skameika\n");
                 // todo - request to skameika server
-                clients[i] = sleep_stage;
+                clients[i] = sleep_skameika_stage;
                 clients_wait_time[i] = 1 + rand() % 4; //  sleep from 1 to 5 * DAY_LENGTH seconds (+ process time)
                 printf("I am at skameika now. I go to sleep on skameika for %d days\n", clients_wait_time[i]);
+            } else if (!strcmp(clients[i], free_request)) {
+                printf("client goes to free room\n");
+
+                if (send(sock, clients[i], strlen(clients[i]), 0) != strlen(clients[i]))
+                    DieWithError("send() sent a different number of bytes than expected");
+
+                while (totalBytesRcvd < MESSAGE_SIZE) {
+                    /* Receive up to the buffer size (minus 1 to leave space for
+                    a null terminator) bytes from the sender */
+                    if ((bytesRcvd = recv(sock, echoBuffer, RCVBUFSIZE - 1, 0)) <= 0)
+                        DieWithError("recv() failed or connection closed prematurely");
+                    totalBytesRcvd += bytesRcvd;   /* Keep tally of total bytes */
+                    echoBuffer[bytesRcvd] = '\0';  /* Terminate the string! */
+                    printf("message, that client %d recieved: ", i);
+                    printf("%s\n", echoBuffer);      /* Print the echo buffer */
+
+                    // case success - client rent a room
+                    if (!strcmp(echoBuffer, success_response)) {
+                        printf("WHAT? I CAN NOT FREE A ROOM? THIS IS STRANGE!\n");
+                        exit(-1);
+                    }
+                    printf("i freed a room, i will try to rent a room tomorrow");
+                    clients[i] = rent_request;
+                }
             }
             printf("\n\n");
             sleep(DAY_LENGTH);
