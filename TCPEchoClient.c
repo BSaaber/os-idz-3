@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
                     printf("%s\n", echoBuffer);      /* Print the echo buffer */
 
                     // case success - client rent a room
-                    if (!strcmp(echoBuffer, success_response)) {
+                    if (!strcmp(echoBuffer, error_response)) {
                         printf("WHAT? I CAN NOT FREE A ROOM? THIS IS STRANGE!\n");
                         exit(-1);
                     }
