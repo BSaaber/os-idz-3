@@ -11,8 +11,8 @@ void HandleTCPClient(int clntSocket, int* free_space)
 {
     char echoBuffer[RCVBUFSIZE];        /* Buffer for echo string */
     int recvMsgSize;                    /* Size of received message */
-    char* success_response = "success\0";
-    char* error_response = "error\0";
+    char* success_response = "okay\0";
+    char* error_response =   "fail\0";
     char* rent_request = "rent\0";
     char* free_request = "free\0";
     char* response;
