@@ -33,6 +33,7 @@ https://t.me/c/1895583371/2267
 make all
 ```
 ### Запуск
+**Начинать** запуск следует с серверов.
 1. Отель
 ```
 sudo ./server <server port> <rooms amount>
@@ -43,7 +44,7 @@ sudo ./skameika
 ```
 3. Люди
 ```
-sudo ./client <server ip> <server port> <people amount> <day delay in seconds>
+sudo ./client <hotel ip> <hotel port> <people amount> <day delay in seconds> <skameika ip> <skameika port>
 ```
 ### Пример работы
 1. Запуск Отеля
@@ -56,7 +57,7 @@ sudo ./skameika
 ```
 3. Запуск Людей
 ```
-sudo ./client 127.0.0.1 7 10 2
+sudo ./client 127.0.0.1 7 10 2 127.0.0.1 9
 ```
 
 Логи Отеля:
