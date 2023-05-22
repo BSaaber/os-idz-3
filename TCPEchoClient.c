@@ -128,11 +128,12 @@ int main(int argc, char *argv[])
                 clients_wait_time[i] = 1 + rand() % 4; //  sleep from 1 to 5 * DAY_LENGTH seconds (+ process time)
                 printf("I am at skameika now. I go to sleep on skameika for %d days\n", clients_wait_time[i]);
             } else if (!strcmp(clients[i], free_request)) {
-                printf("client goes to free room\n");
+                printf("client goes to free a room\n");
 
                 if (send(sock, clients[i], strlen(clients[i]), 0) != strlen(clients[i]))
                     DieWithError("send() sent a different number of bytes than expected");
 
+                totalBytesRcvd = 0;
                 while (totalBytesRcvd < MESSAGE_SIZE) {
                     /* Receive up to the buffer size (minus 1 to leave space for
                     a null terminator) bytes from the sender */
@@ -153,8 +154,10 @@ int main(int argc, char *argv[])
                 }
             }
             printf("\n\n");
-            sleep(DAY_LENGTH);
+            sleep(1);
         }
+        sleep(DAY_LENGTH);
+        printf("------------------\n\n\n");
     }
 
     close(sock);

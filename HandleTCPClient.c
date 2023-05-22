@@ -26,7 +26,7 @@ void HandleTCPClient(int clntSocket, int* free_space)
     while (recvMsgSize > 0)      /* zero indicates end of transmission */
     {
         if (!strcmp(free_request, echoBuffer)) {
-            *free_space++;
+            *free_space += 1;
             response = success_response;
             printf("log: freeing room. space now - %d\n", *free_space);
         } else if (!strcmp(rent_request, echoBuffer)) {
